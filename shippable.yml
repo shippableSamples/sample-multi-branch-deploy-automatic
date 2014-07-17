@@ -1,0 +1,36 @@
+language: node_js
+
+node_js:
+  - 0.10.25
+
+services:
+   - mongodb
+
+env:
+  global:
+    - STAGING_APP_NAME=thawing-journey-6674 PRODUCTION_APP_NAME=fierce-river-3820
+    - MONGOLAB_URI=mongodb://localhost/test
+    - XUNIT_FILE=shippable/testresults/result.xml
+    - secure: MRuHkLbL9HPkJPU5lzkKM1+NOq1S5RrhxEyhJkk60xxYiF7DMzydiBN8oFBjWrSmyGeGRuEC22a0I5ItobdWVszfcJCaXHwtfKzfGOUdKuyCnDgvojXhv/jrBvULyLK6zsLw3b8NMxdnwNsHqSPm19qW/EIGEl9Zv/637Igos69z9aT7+xrEG013+6HtKYb8RHm+iPSNsFoBi/RSAHYuM1eLTZWG2WAkjgzZaYmrHCgNwVmk+HOGR+TOWN7Iu5lrjyvC1XDCQrOvo1hZI30cd9OqJ5aadFm3exQpNhI4I7AgOnCbK3NoWNc/GAnqKXCvsaIQ80Jd/uLIOVyMjD6Xmg==
+
+before_install:
+  - which heroku || wget -qO- https://toolbelt.heroku.com/install-ubuntu.sh | sh
+  - test -f ~/.ssh/id_rsa.heroku || ssh-keygen -y -f ~/.ssh/id_rsa > ~/.ssh/id_rsa.heroku && heroku keys:add ~/.ssh/id_rsa.heroku
+  - git remote -v | grep ^staging || heroku git:remote --remote staging --app $STAGING_APP_NAME
+  - git remote -v | grep ^production || heroku git:remote --remote production --app $PRODUCTION_APP_NAME
+
+before_script: 
+  - mkdir -p shippable/testresults
+  - mkdir -p shippable/codecoverage
+
+script:
+  - >
+    [[ $BRANCH = 'production' ]] && ./smoke_test.sh || npm test
+
+after_success:
+  - ./node_modules/.bin/istanbul cover grunt -- -u tdd
+  - ./node_modules/.bin/istanbul report cobertura --dir  shippable/codecoverage/
+  - >
+    [[ $BRANCH = 'production' ]] && REMOTE=production || REMOTE=staging
+  - git push -f $REMOTE master
+  - ./push_to_production.sh
