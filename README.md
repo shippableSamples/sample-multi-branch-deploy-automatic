@@ -42,3 +42,5 @@ to point to the current commit and updates the source GitHub repo.
 
 For more detailed documentation on Heroku deployment, please see Shippable's continuous
 deployment section: http://docs.shippable.com/en/latest/config.html#continuous-deployment
+
+This sample is built for Shippable, a docker based continuous integration and deployment platform.
